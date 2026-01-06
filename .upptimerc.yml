@@ -1,25 +1,300 @@
-# Thay đổi thông tin owner
-owner: anikenjki  # Thay bằng username của bạn
-repo: uptime-page                  # Tên repo vừa tạo
+# ============================================
+# 🎬 AniKenji Status Page Configuration
+# ============================================
 
-# Các site cần monitor
+owner: anikenji
+repo: uptime-page
+
+# ============================================
+# 📡 Services to Monitor
+# ============================================
 sites:
-  - name: AniKenji Website
+  - name: Website
     url: https://anikenji.live
+    icon: 🌐
     
-  - name: Streaming API
-    url: https://service.anikenji.live  # Thay bằng endpoint API của bạn
+  - name: Streaming Service
+    url: https://service.anikenji.live
+    icon: 📺
     
-# Thông tin status page
+
+# ============================================
+# 🎨 Status Page Design
+# ============================================
 status-website:
-  cname: status.anikenji.live  # Custom domain
-  logoUrl: https://anikenji.live/images/header-logo.png  # Logo của bạn
+  cname: status.anikenji.live
+  logoUrl: https://anikenji.live/images/header-logo.png
+  favicon: https://anikenji.live/images/favicon.png
   name: AniKenji Status
-  introTitle: "**AniKenji** đang hoạt động bình thường"
-  introMessage: Trang này hiển thị trạng thái realtime của hệ thống AniKenji.
-  theme: dark  # hoặc light
+  introTitle: "🎬 Trạng thái hệ thống **AniKenji**"
+  introMessage: Theo dõi trạng thái realtime của các dịch vụ streaming AniKenji. Cập nhật tự động mỗi 5 phút.
+  theme: dark
   
-# Cấu hình thông báo (tùy chọn)
+  # Navigation bar
+  navbar:
+    - title: 🏠 Trang chủ
+      href: https://anikenji.live
+    - title: 📺 Xem phim
+      href: https://anikenji.live/watch
+  
+  # Custom CSS - Premium Glassmorphism Theme
+  css: |
+    /* ===== Import Premium Font ===== */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* ===== CSS Variables ===== */
+    :root {
+      --color-bg-primary: #0a0a0f;
+      --color-bg-secondary: #12121a;
+      --color-bg-card: rgba(18, 18, 26, 0.7);
+      --color-primary: #00d4ff;
+      --color-primary-glow: rgba(0, 212, 255, 0.3);
+      --color-success: #00ff88;
+      --color-success-glow: rgba(0, 255, 136, 0.2);
+      --color-warning: #ffaa00;
+      --color-danger: #ff4466;
+      --color-text: #ffffff;
+      --color-text-muted: #8888aa;
+      --color-border: rgba(255, 255, 255, 0.08);
+      --glass-blur: blur(20px);
+      --border-radius: 16px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* ===== Base Styles ===== */
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--color-bg-primary);
+      background-image: 
+        radial-gradient(ellipse at top, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at bottom right, rgba(138, 43, 226, 0.08) 0%, transparent 50%);
+      min-height: 100vh;
+      color: var(--color-text);
+      line-height: 1.6;
+    }
+    
+    /* ===== Header ===== */
+    header, .navbar {
+      background: var(--color-bg-card) !important;
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--color-border);
+      padding: 1rem 2rem;
+    }
+    
+    .navbar a {
+      color: var(--color-text-muted) !important;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+    
+    .navbar a:hover {
+      color: var(--color-primary) !important;
+    }
+    
+    /* ===== Logo & Title ===== */
+    .logo img {
+      filter: drop-shadow(0 0 20px var(--color-primary-glow));
+    }
+    
+    h1, .intro-title {
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--color-text) 0%, var(--color-primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    /* ===== Status Cards ===== */
+    .status-card, .service-card, article, .card {
+      background: var(--color-bg-card) !important;
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--color-border) !important;
+      border-radius: var(--border-radius) !important;
+      padding: 1.5rem !important;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .status-card:hover, .service-card:hover, article:hover, .card:hover {
+      border-color: rgba(0, 212, 255, 0.3) !important;
+      transform: translateY(-2px);
+      box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.3),
+        0 0 40px var(--color-primary-glow);
+    }
+    
+    /* ===== Status Indicators ===== */
+    .status-up, .operational, [class*="success"] {
+      color: var(--color-success) !important;
+    }
+    
+    .status-up::before, .operational::before {
+      content: '';
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: var(--color-success);
+      border-radius: 50%;
+      margin-right: 8px;
+      box-shadow: 0 0 15px var(--color-success-glow);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
+    }
+    
+    .status-down, .outage, [class*="danger"], [class*="error"] {
+      color: var(--color-danger) !important;
+    }
+    
+    .status-degraded, .degraded, [class*="warning"] {
+      color: var(--color-warning) !important;
+    }
+    
+    /* ===== All Systems Operational Banner ===== */
+    .all-ok, .all-systems-operational, [class*="all-systems"] {
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.15) 0%, rgba(0, 212, 255, 0.1) 100%) !important;
+      border: 1px solid rgba(0, 255, 136, 0.3) !important;
+      border-radius: var(--border-radius) !important;
+      padding: 1.5rem !important;
+      text-align: center;
+      font-weight: 600;
+      color: var(--color-success) !important;
+      margin-bottom: 2rem;
+    }
+    
+    /* ===== Graphs & Charts ===== */
+    .graph-container, .chart, canvas {
+      background: var(--color-bg-card) !important;
+      border-radius: var(--border-radius) !important;
+      padding: 1rem;
+    }
+    
+    /* ===== Incidents Timeline ===== */
+    .incident, .incident-card {
+      border-left: 3px solid var(--color-primary) !important;
+      padding-left: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .incident-title {
+      font-weight: 600;
+      color: var(--color-text);
+    }
+    
+    .incident-date {
+      color: var(--color-text-muted);
+      font-size: 0.85rem;
+    }
+    
+    /* ===== Buttons ===== */
+    button, .btn, [class*="button"] {
+      background: linear-gradient(135deg, var(--color-primary) 0%, #0099cc 100%) !important;
+      border: none !important;
+      border-radius: 12px !important;
+      padding: 0.75rem 1.5rem !important;
+      color: var(--color-bg-primary) !important;
+      font-weight: 600 !important;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    button:hover, .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px var(--color-primary-glow);
+    }
+    
+    /* ===== Footer ===== */
+    footer {
+      background: transparent !important;
+      border-top: 1px solid var(--color-border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--color-text-muted);
+    }
+    
+    /* ===== Scrollbar ===== */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--color-bg-secondary);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--color-border);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--color-primary);
+    }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .status-card, .service-card, article, .card {
+        padding: 1rem !important;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+    
+    /* ===== Selection ===== */
+    ::selection {
+      background: var(--color-primary);
+      color: var(--color-bg-primary);
+    }
+
+# ============================================
+# 🌍 Internationalization
+# ============================================
+i18n:
+  activeIncidents: Sự cố đang xảy ra
+  allSystemsOperational: ✅ Tất cả hệ thống hoạt động bình thường
+  incidentReport: "Báo cáo sự cố #$NUMBER vào $DATE"
+  activeIncidentSummary: "$NUMBER sự cố đang xảy ra"
+  incidentTitle: Lịch sử sự cố
+  incidentDetails: Chi tiết sự cố
+  subscribeTitle: Đăng ký nhận thông báo
+  subscribeDesc: Nhận thông báo qua email khi có sự cố
+  pastIncidents: Sự cố trong quá khứ
+  subscribePlaceholder: your@email.com
+  ok: Bình thường
+  degraded: Giảm hiệu suất
+  down: Không hoạt động
+
+# ============================================
+# 🔔 Notifications (Tùy chọn)
+# ============================================
 # notifications:
 #   - type: discord
-#     channel: DISCORD_WEBHOOK_URL
+#     channel: YOUR_DISCORD_WEBHOOK
+#   - type: telegram
+#     botToken: YOUR_BOT_TOKEN  
+#     chatId: YOUR_CHAT_ID
+
+# ============================================
+# ⚙️ Advanced Settings
+# ============================================
+workflowSchedule:
+  graphs: "0 0 * * *"      # Cập nhật graphs hàng ngày
+  responseTime: "0 23 * * *" # Response time summary
+  staticSite: "0 1 * * *"  # Rebuild site hàng ngày
+  summary: "0 0 * * *"     # Summary notification
+
+# Commit messages
+commitMessages:
+  commitAuthorName: "AniKenji Admin"
+  commitAuthorEmail: "admin@anikenji.live"
