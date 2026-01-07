@@ -64,13 +64,13 @@ function updateOverallStatus(data) {
 
     if (allUp) {
         banner.classList.add('operational');
-        banner.querySelector('.status-text').textContent = '✅ Tất cả hệ thống hoạt động bình thường';
+        banner.querySelector('.status-text').textContent = 'Tất cả hệ thống hoạt động bình thường';
     } else if (anyDown) {
         banner.classList.add('outage');
-        banner.querySelector('.status-text').textContent = '🔴 Một số dịch vụ đang gặp sự cố';
+        banner.querySelector('.status-text').textContent = 'Một số dịch vụ đang gặp sự cố';
     } else {
         banner.classList.add('degraded');
-        banner.querySelector('.status-text').textContent = '⚠️ Một số dịch vụ đang bị ảnh hưởng';
+        banner.querySelector('.status-text').textContent = 'Một số dịch vụ đang bị ảnh hưởng';
     }
 }
 
@@ -351,3 +351,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
