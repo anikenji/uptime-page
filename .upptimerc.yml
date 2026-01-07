@@ -2,7 +2,7 @@
 # 🎬 AniKenji Status Page Configuration
 # ============================================
 
-owner: anikenji
+owner: anikenjki
 repo: uptime-page
 
 # ============================================
@@ -17,6 +17,9 @@ sites:
     url: https://service.anikenji.live
     icon: 📺
     
+  - name: API
+    url: https://anikenji.live/api
+    icon: ⚡
 
 # ============================================
 # 🎨 Status Page Design
@@ -24,10 +27,10 @@ sites:
 status-website:
   cname: status.anikenji.live
   logoUrl: https://anikenji.live/images/header-logo.png
-  favicon: https://anikenji.live/images/favicon.png
+  favicon: https://anikenji.live/favicon.ico
   name: AniKenji Status
   introTitle: "🎬 Trạng thái hệ thống **AniKenji**"
-  introMessage: Theo dõi trạng thái realtime của các dịch vụ streaming AniKenji. Cập nhật tự động mỗi 5 phút.
+  introMessage: Theo dõi trạng thái realtime của các dịch vụ streaming AniKenji. Cập nhật tự động mỗi 3 phút.
   theme: dark
   
   # Navigation bar
@@ -35,7 +38,7 @@ status-website:
     - title: 🏠 Trang chủ
       href: https://anikenji.live
     - title: 📺 Xem phim
-      href: https://anikenji.live/watch
+      href: https://anikenji.live/phim
   
   # Custom CSS - Premium Glassmorphism Theme
   css: |
@@ -276,14 +279,14 @@ i18n:
   down: Không hoạt động
 
 # ============================================
-# 🔔 Notifications (Tùy chọn)
+# 🔔 Notifications
 # ============================================
 notifications:
   - type: discord
-    channel: https://discord.com/api/webhooks/1458237801903427817/px9tJy2jji7cOjQH3bttV6ytIbICYV9lYD4dyIj6BCdW5lG9K4OgmPtMq3erXt4oB0SM
-#   - type: telegram
-#     botToken: YOUR_BOT_TOKEN  
-#     chatId: YOUR_CHAT_ID
+    channel: ${{ secrets.DISCORD_WEBHOOK }}
+    # Tạo webhook trong Discord Server Settings -> Integrations -> Webhooks
+    # Sau đó vào GitHub repo Settings -> Secrets and variables -> Actions
+    # Tạo secret tên DISCORD_WEBHOOK với value là URL webhook
 
 # ============================================
 # ⚙️ Advanced Settings
@@ -296,5 +299,5 @@ workflowSchedule:
 
 # Commit messages
 commitMessages:
-  commitAuthorName: "AniKenji Admin"
-  commitAuthorEmail: "admin@anikenji.live"
+  commitAuthorName: "AniKenji Bot"
+  commitAuthorEmail: "bot@anikenji.live"
