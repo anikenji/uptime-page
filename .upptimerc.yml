@@ -277,12 +277,10 @@ i18n:
 # ============================================
 # 🔔 Notifications
 # ============================================
+# Upptime tự động detect secret DISCORD_WEBHOOK
+# Chỉ cần tạo secret trong GitHub repo settings
 notifications:
   - type: discord
-    channel: https://discord.com/api/webhooks/1458237801903427817/px9tJy2jji7cOjQH3bttV6ytIbICYV9lYD4dyIj6BCdW5lG9K4OgmPtMq3erXt4oB0SM
-    # Tạo webhook trong Discord Server Settings -> Integrations -> Webhooks
-    # Sau đó vào GitHub repo Settings -> Secrets and variables -> Actions
-    # Tạo secret tên DISCORD_WEBHOOK với value là URL webhook
 
 # ============================================
 # ⚙️ Advanced Settings
