@@ -1,8 +1,10 @@
 // ===== Configuration =====
 const CONFIG = {
-    // API endpoints - Using relative paths (deployed from master branch)
+    // API endpoints
     apiBase: './history',
     apiResponseTime: './api',
+    // Cloudflare Worker API for historical data
+    workerApi: 'https://anikenji-stats.buicaobinh2016.workers.dev',
     // Number of days to show in uptime bar
     uptimeDays: 90,
     // Refresh interval (ms) - refresh every 5 minutes
@@ -203,20 +205,37 @@ async function fetchAndCreateChart(canvasId, slug, currentTime) {
     let chartData = [];
 
     try {
-        // Try to fetch response time data from Upptime (stored in api folder)
-        const response = await fetch(`${CONFIG.apiResponseTime}/${slug}/response-time.json?t=${Date.now()}`);
+        // Fetch response time history from Cloudflare Worker API
+        const response = await fetch(`${CONFIG.workerApi}/history/${slug}?hours=24`);
         if (response.ok) {
-            const data = await response.json();
-            // Take last 24 data points
-            const recentData = data.slice(-24);
-            recentData.forEach(point => {
-                const date = new Date(point.timestamp || point[0]);
-                labels.push(date.getHours() + ':00');
-                chartData.push(point.time || point[1] || 0);
-            });
+            const result = await response.json();
+            if (result.data && result.data.length > 0) {
+                // Group by hour for cleaner chart
+                const hourlyData = {};
+                result.data.forEach(point => {
+                    const date = new Date(point.time);
+                    const hourKey = date.getHours();
+                    if (!hourlyData[hourKey]) {
+                        hourlyData[hourKey] = { sum: 0, count: 0 };
+                    }
+                    hourlyData[hourKey].sum += point.responseTime;
+                    hourlyData[hourKey].count++;
+                });
+
+                // Convert to arrays
+                for (let i = 0; i < 24; i++) {
+                    const hour = (new Date().getHours() - 23 + i + 24) % 24;
+                    labels.push(hour + ':00');
+                    if (hourlyData[hour]) {
+                        chartData.push(Math.round(hourlyData[hour].sum / hourlyData[hour].count));
+                    } else {
+                        chartData.push(null); // No data for this hour
+                    }
+                }
+            }
         }
     } catch (e) {
-        console.log('Could not fetch response time data');
+        console.log('Could not fetch response time data from Worker:', e);
     }
 
     // Fallback if no data
