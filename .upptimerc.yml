@@ -278,9 +278,9 @@ i18n:
 # ============================================
 # 🔔 Notifications (Tùy chọn)
 # ============================================
-# notifications:
-#   - type: discord
-#     channel: YOUR_DISCORD_WEBHOOK
+notifications:
+  - type: discord
+    channel: https://discord.com/api/webhooks/1458237801903427817/px9tJy2jji7cOjQH3bttV6ytIbICYV9lYD4dyIj6BCdW5lG9K4OgmPtMq3erXt4oB0SM
 #   - type: telegram
 #     botToken: YOUR_BOT_TOKEN  
 #     chatId: YOUR_CHAT_ID
