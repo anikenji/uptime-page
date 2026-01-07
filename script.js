@@ -34,7 +34,11 @@ async function loadStatusData() {
             throw new Error('API not available');
         }
 
-        const data = await response.json();
+        // Upptime returns array directly, wrap it in object
+        let data = await response.json();
+        if (Array.isArray(data)) {
+            data = { sites: data };
+        }
 
         // Update UI with real data
         updateOverallStatus(data);
