@@ -3,9 +3,9 @@ const CONFIG = {
     // GitHub repo containing Upptime data
     owner: 'anikenji',
     repo: 'uptime-page',
-    // API endpoints - using master branch for API data
-    apiBase: 'https://raw.githubusercontent.com/anikenji/uptime-page/master/api',
-    historyBase: 'https://raw.githubusercontent.com/anikenji/uptime-page/master/history',
+    // API endpoints - Upptime stores data in gh-pages branch!
+    apiBase: 'https://raw.githubusercontent.com/anikenji/uptime-page/gh-pages/api',
+    historyBase: 'https://raw.githubusercontent.com/anikenji/uptime-page/gh-pages/history',
     // Services configuration (icons for display)
     serviceIcons: {
         'website': '🌐',
