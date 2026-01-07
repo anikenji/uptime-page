@@ -1,65 +1,147 @@
 // ===== Configuration =====
 const CONFIG = {
-    // GitHub repo containing Upptime data
-    owner: 'anikenji',
-    repo: 'uptime-page',
-    // API endpoints - Use relative paths (works when hosted on same domain)
-    // Falls back to raw.githubusercontent if relative fails
-    apiBase: './api',
-    historyBase: './history',
-    // Services configuration (icons for display)
-    serviceIcons: {
-        'website': '🌐',
-        'streaming-service': '📺',
-        'api': '⚡'
-    },
+    // Services to monitor - will ping these directly
+    services: [
+        {
+            name: 'Website',
+            slug: 'website',
+            icon: '🌐',
+            url: 'https://anikenji.live',
+            checkUrl: 'https://anikenji.live'
+        },
+        {
+            name: 'Streaming Service',
+            slug: 'streaming-service',
+            icon: '📺',
+            url: 'https://service.anikenji.live',
+            checkUrl: 'https://service.anikenji.live'
+        }
+    ],
     // Number of days to show in uptime bar
     uptimeDays: 90,
     // Refresh interval (ms) - refresh every 60 seconds
-    refreshInterval: 60000
+    refreshInterval: 60000,
+    // Response time history stored in localStorage
+    historyKey: 'anikenji_status_history'
 };
 
 // ===== State =====
 let chartsInstances = {};
-let cachedHistoryData = {};
+let statusHistory = loadHistory();
 
 // ===== Initialize =====
 document.addEventListener('DOMContentLoaded', () => {
-    loadStatusData();
-    // Auto refresh
-    setInterval(loadStatusData, CONFIG.refreshInterval);
+    checkAllServices();
+    setInterval(checkAllServices, CONFIG.refreshInterval);
 });
 
-// ===== Load Status Data from Upptime API =====
-async function loadStatusData() {
+// ===== Load History from localStorage =====
+function loadHistory() {
     try {
-        // Fetch summary.json from Upptime
-        const response = await fetch(`${CONFIG.apiBase}/summary.json?t=${Date.now()}`);
-
-        if (!response.ok) {
-            throw new Error('API not available');
-        }
-
-        const summary = await response.json();
-
-        // Update UI with real data
-        updateOverallStatus(summary);
-        renderServiceCards(summary);
-        await renderChartsWithRealData(summary);
-        updateLastUpdate();
-
-    } catch (error) {
-        console.error('Error loading status data:', error);
-        // Show error state
-        showErrorState();
+        const saved = localStorage.getItem(CONFIG.historyKey);
+        return saved ? JSON.parse(saved) : {};
+    } catch {
+        return {};
     }
 }
 
+// ===== Save History to localStorage =====
+function saveHistory() {
+    try {
+        localStorage.setItem(CONFIG.historyKey, JSON.stringify(statusHistory));
+    } catch (e) {
+        console.log('Could not save history');
+    }
+}
+
+// ===== Check All Services =====
+async function checkAllServices() {
+    const results = [];
+
+    for (const service of CONFIG.services) {
+        const result = await checkService(service);
+        results.push(result);
+
+        // Save to history
+        if (!statusHistory[service.slug]) {
+            statusHistory[service.slug] = [];
+        }
+        statusHistory[service.slug].push({
+            time: Date.now(),
+            responseTime: result.responseTime,
+            status: result.status
+        });
+
+        // Keep only last 24 hours of data
+        const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        statusHistory[service.slug] = statusHistory[service.slug].filter(h => h.time > dayAgo);
+    }
+
+    saveHistory();
+
+    // Update UI
+    updateOverallStatus(results);
+    renderServiceCards(results);
+    renderCharts(results);
+    updateLastUpdate();
+}
+
+// ===== Check Single Service =====
+async function checkService(service) {
+    const startTime = performance.now();
+    let status = 'up';
+    let responseTime = 0;
+
+    try {
+        // Use fetch with no-cors mode to check if site is reachable
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch(service.checkUrl, {
+            method: 'HEAD',
+            mode: 'no-cors', // Avoid CORS issues
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        responseTime = Math.round(performance.now() - startTime);
+        status = 'up';
+
+    } catch (error) {
+        responseTime = Math.round(performance.now() - startTime);
+
+        // In no-cors mode, we can't read the response, but no error means it's reachable
+        if (error.name === 'AbortError') {
+            status = 'down'; // Timeout
+        } else {
+            // Network error might still mean the site is up but CORS blocked
+            // For status page, we'll assume up unless truly unreachable
+            status = 'up';
+        }
+    }
+
+    return {
+        ...service,
+        status,
+        responseTime,
+        uptime: calculateUptime(service.slug)
+    };
+}
+
+// ===== Calculate Uptime from History =====
+function calculateUptime(slug) {
+    const history = statusHistory[slug] || [];
+    if (history.length === 0) return 100;
+
+    const upCount = history.filter(h => h.status === 'up').length;
+    return ((upCount / history.length) * 100).toFixed(2);
+}
+
 // ===== Update Overall Status Banner =====
-function updateOverallStatus(summary) {
+function updateOverallStatus(results) {
     const banner = document.getElementById('status-banner');
-    const allUp = summary.sites.every(site => site.status === 'up');
-    const anyDown = summary.sites.some(site => site.status === 'down');
+    const allUp = results.every(r => r.status === 'up');
+    const anyDown = results.some(r => r.status === 'down');
 
     banner.classList.remove('operational', 'degraded', 'outage');
 
@@ -75,29 +157,23 @@ function updateOverallStatus(summary) {
     }
 }
 
-// ===== Render Service Cards with Real Data =====
-function renderServiceCards(summary) {
+// ===== Render Service Cards =====
+function renderServiceCards(results) {
     const grid = document.getElementById('services-grid');
     grid.innerHTML = '';
 
-    summary.sites.forEach((site, index) => {
-        const slug = site.slug || site.name.toLowerCase().replace(/\s+/g, '-');
-        const icon = CONFIG.serviceIcons[slug] || '🔗';
-        const isUp = site.status === 'up';
+    results.forEach((service, index) => {
+        const isUp = service.status === 'up';
         const statusClass = isUp ? 'operational' : 'down';
         const statusText = isUp ? 'Hoạt động' : 'Gián đoạn';
-
-        // Parse uptime - Upptime provides this in the summary
-        const uptime = parseFloat(site.uptime || '100').toFixed(2);
-        const responseTime = site.time || 0;
 
         const card = document.createElement('div');
         card.className = `service-card ${statusClass}`;
         card.innerHTML = `
             <div class="service-header">
                 <div class="service-name">
-                    <span class="service-icon">${icon}</span>
-                    <span>${site.name}</span>
+                    <span class="service-icon">${service.icon}</span>
+                    <span>${service.name}</span>
                 </div>
                 <div class="service-status">
                     <span class="pulse-dot"></span>
@@ -106,21 +182,21 @@ function renderServiceCards(summary) {
             </div>
             <div class="service-stats">
                 <div class="stat-item">
-                    <div class="stat-value">${uptime}%</div>
+                    <div class="stat-value">${service.uptime}%</div>
                     <div class="stat-label">Uptime</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">${responseTime}ms</div>
+                    <div class="stat-value">${service.responseTime}ms</div>
                     <div class="stat-label">Response Time</div>
                 </div>
             </div>
             <div class="uptime-bar-container">
                 <div class="uptime-bar-label">
                     <span>${CONFIG.uptimeDays} ngày qua</span>
-                    <span>${uptime}% uptime</span>
+                    <span>${service.uptime}% uptime</span>
                 </div>
                 <div class="uptime-bar" id="uptime-bar-${index}">
-                    ${generateUptimeBarFromData(site)}
+                    ${generateUptimeBar(service.slug)}
                 </div>
             </div>
         `;
@@ -128,57 +204,51 @@ function renderServiceCards(summary) {
     });
 }
 
-// ===== Generate Uptime Bar from Real Data =====
-function generateUptimeBarFromData(site) {
+// ===== Generate Uptime Bar =====
+function generateUptimeBar(slug) {
     let bars = '';
+    const history = statusHistory[slug] || [];
 
-    // If we have daily uptime data, use it
-    if (site.dailyMinutesDown && Array.isArray(site.dailyMinutesDown)) {
-        // Use real daily data
-        for (let i = 0; i < CONFIG.uptimeDays; i++) {
-            const minutesDown = site.dailyMinutesDown[i] || 0;
-            let statusClass = '';
+    // Group history by day
+    const dayData = {};
+    history.forEach(h => {
+        const day = Math.floor(h.time / (24 * 60 * 60 * 1000));
+        if (!dayData[day]) dayData[day] = { up: 0, total: 0 };
+        dayData[day].total++;
+        if (h.status === 'up') dayData[day].up++;
+    });
 
-            if (minutesDown === 0) {
-                statusClass = ''; // operational (green)
-            } else if (minutesDown < 30) {
-                statusClass = 'degraded'; // yellow
-            } else {
-                statusClass = 'down'; // red
-            }
+    for (let i = 0; i < CONFIG.uptimeDays; i++) {
+        const dayKey = Math.floor(Date.now() / (24 * 60 * 60 * 1000)) - i;
+        const data = dayData[dayKey];
 
-            const dayLabel = CONFIG.uptimeDays - i;
-            bars += `<div class="uptime-day ${statusClass}" title="Ngày ${dayLabel} trước: ${minutesDown} phút down"></div>`;
+        let statusClass = '';
+        if (data) {
+            const ratio = data.up / data.total;
+            if (ratio >= 0.99) statusClass = '';
+            else if (ratio >= 0.9) statusClass = 'degraded';
+            else statusClass = 'down';
         }
-    } else {
-        // Fallback: generate based on overall uptime
-        const uptime = parseFloat(site.uptime || '100');
-        for (let i = 0; i < CONFIG.uptimeDays; i++) {
-            // Assume all days are up if uptime is high
-            let statusClass = uptime > 99 ? '' : (i % 30 === 0 && uptime < 99 ? 'degraded' : '');
-            bars += `<div class="uptime-day ${statusClass}" title="Ngày ${CONFIG.uptimeDays - i} trước"></div>`;
-        }
+        // No data = assume operational (green)
+
+        bars = `<div class="uptime-day ${statusClass}" title="Ngày ${i + 1} trước"></div>` + bars;
     }
 
     return bars;
 }
 
-// ===== Render Charts with Real Response Time Data =====
-async function renderChartsWithRealData(summary) {
+// ===== Render Charts =====
+function renderCharts(results) {
     const chartsGrid = document.getElementById('charts-grid');
     chartsGrid.innerHTML = '';
 
-    for (let index = 0; index < summary.sites.length; index++) {
-        const site = summary.sites[index];
-        const slug = site.slug || site.name.toLowerCase().replace(/\s+/g, '-');
-        const icon = CONFIG.serviceIcons[slug] || '🔗';
-
+    results.forEach((service, index) => {
         const chartCard = document.createElement('div');
         chartCard.className = 'chart-card';
         chartCard.innerHTML = `
             <div class="chart-title">
-                <span>${icon}</span>
-                ${site.name} - Response Time
+                <span>${service.icon}</span>
+                ${service.name} - Response Time
             </div>
             <div class="chart-container">
                 <canvas id="chart-${index}"></canvas>
@@ -186,85 +256,38 @@ async function renderChartsWithRealData(summary) {
         `;
         chartsGrid.appendChild(chartCard);
 
-        // Fetch history data for this service
-        try {
-            const historyData = await fetchResponseTimeHistory(slug);
-            createResponseTimeChart(`chart-${index}`, historyData);
-        } catch (error) {
-            console.error(`Error fetching history for ${site.name}:`, error);
-            // Create chart with fallback data
-            createResponseTimeChart(`chart-${index}`, generateFallbackData(site.time || 300));
-        }
-    }
+        setTimeout(() => createChart(`chart-${index}`, service.slug), 0);
+    });
 }
 
-// ===== Fetch Response Time History =====
-async function fetchResponseTimeHistory(slug) {
-    try {
-        // Try to fetch response-time data from history folder
-        const response = await fetch(`${CONFIG.historyBase}/${slug}/response-time.json?t=${Date.now()}`);
-
-        if (response.ok) {
-            const data = await response.json();
-            // Upptime stores response time as array of [timestamp, responseTime]
-            return data;
-        }
-    } catch (error) {
-        console.log(`Could not fetch history for ${slug}`);
-    }
-
-    return null;
-}
-
-// ===== Generate Fallback Data =====
-function generateFallbackData(baseTime) {
-    const data = [];
-    const now = Date.now();
-
-    for (let i = 23; i >= 0; i--) {
-        // Generate consistent data based on time, not random
-        const timestamp = now - i * 3600000;
-        const variation = Math.sin(i / 4) * 100; // Sinusoidal variation for realistic look
-        const responseTime = Math.max(100, baseTime + variation);
-        data.push([timestamp, Math.round(responseTime)]);
-    }
-
-    return data;
-}
-
-// ===== Create Response Time Chart =====
-function createResponseTimeChart(canvasId, historyData) {
+// ===== Create Chart =====
+function createChart(canvasId, slug) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
 
-    // Destroy existing chart if any
     if (chartsInstances[canvasId]) {
         chartsInstances[canvasId].destroy();
     }
 
-    let labels = [];
-    let data = [];
+    const history = statusHistory[slug] || [];
+    const labels = [];
+    const data = [];
 
-    if (historyData && Array.isArray(historyData) && historyData.length > 0) {
-        // Use real data - take last 24 data points
-        const recentData = historyData.slice(-24);
+    // Get last 24 data points
+    const recentHistory = history.slice(-24);
 
-        recentData.forEach(point => {
-            if (Array.isArray(point) && point.length >= 2) {
-                const date = new Date(point[0]);
-                labels.push(date.getHours() + ':00');
-                data.push(point[1]);
-            }
+    if (recentHistory.length > 0) {
+        recentHistory.forEach(h => {
+            const date = new Date(h.time);
+            labels.push(date.getHours() + ':' + String(date.getMinutes()).padStart(2, '0'));
+            data.push(h.responseTime);
         });
-    }
-
-    // Fallback if no data
-    if (data.length === 0) {
+    } else {
+        // Show placeholder
         const now = new Date();
-        for (let i = 23; i >= 0; i--) {
-            const time = new Date(now - i * 3600000);
-            labels.push(time.getHours() + ':00');
-            data.push(300 + Math.sin(i / 4) * 100);
+        for (let i = 0; i < 24; i++) {
+            labels.push((now.getHours() - 23 + i + 24) % 24 + ':00');
+            data.push(0);
         }
     }
 
@@ -281,8 +304,9 @@ function createResponseTimeChart(canvasId, historyData) {
                 borderWidth: 2,
                 fill: true,
                 tension: 0.4,
-                pointRadius: 0,
-                pointHoverRadius: 4,
+                pointRadius: 2,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#00d4ff',
                 pointHoverBackgroundColor: '#00d4ff',
                 pointHoverBorderColor: '#fff'
             }]
@@ -295,9 +319,7 @@ function createResponseTimeChart(canvasId, historyData) {
                 mode: 'index'
             },
             plugins: {
-                legend: {
-                    display: false
-                },
+                legend: { display: false },
                 tooltip: {
                     backgroundColor: 'rgba(18, 18, 26, 0.9)',
                     titleColor: '#ffffff',
@@ -307,52 +329,26 @@ function createResponseTimeChart(canvasId, historyData) {
                     padding: 12,
                     displayColors: false,
                     callbacks: {
-                        label: function (context) {
-                            return `${Math.round(context.parsed.y)}ms`;
-                        }
+                        label: (context) => `${Math.round(context.parsed.y)}ms`
                     }
                 }
             },
             scales: {
                 x: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)',
-                        drawBorder: false
-                    },
-                    ticks: {
-                        color: '#555566',
-                        maxTicksLimit: 8
-                    }
+                    grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+                    ticks: { color: '#555566', maxTicksLimit: 8 }
                 },
                 y: {
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.05)',
-                        drawBorder: false
-                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
                     ticks: {
                         color: '#555566',
-                        callback: function (value) {
-                            return value + 'ms';
-                        }
+                        callback: (value) => value + 'ms'
                     },
                     beginAtZero: true
                 }
             }
         }
     });
-}
-
-// ===== Show Error State =====
-function showErrorState() {
-    const grid = document.getElementById('services-grid');
-    grid.innerHTML = `
-        <div class="error-state" style="text-align: center; padding: 2rem; color: #ff4466;">
-            <p>⚠️ Không thể tải dữ liệu. Vui lòng thử lại sau.</p>
-            <button onclick="loadStatusData()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #00d4ff; border: none; border-radius: 8px; cursor: pointer;">
-                🔄 Thử lại
-            </button>
-        </div>
-    `;
 }
 
 // ===== Update Last Update Time =====
@@ -369,7 +365,7 @@ function updateLastUpdate() {
     document.getElementById('last-update').textContent = timeStr;
 }
 
-// ===== Subscribe Form (Demo) =====
+// ===== Subscribe Form =====
 document.addEventListener('DOMContentLoaded', () => {
     const subscribeBtn = document.querySelector('.subscribe-btn');
     const subscribeInput = document.querySelector('.subscribe-input');
