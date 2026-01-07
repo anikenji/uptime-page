@@ -1,16 +1,13 @@
 name: Save Response Time to D1
 
 on:
-  workflow_run:
-    workflows: ["Uptime CI"]
-    types:
-      - completed
+  schedule:
+    - cron: "*/5 * * * *"  # Chạy mỗi 5 phút (cùng với Uptime CI)
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
   save-response-time:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     
     steps:
       - name: Checkout
