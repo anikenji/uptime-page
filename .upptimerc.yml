@@ -16,10 +16,6 @@ sites:
   - name: Streaming Service
     url: https://service.anikenji.live
     icon: 📺
-    
-  - name: API
-    url: https://anikenji.live/api
-    icon: ⚡
 
 # ============================================
 # 🎨 Status Page Design
@@ -27,7 +23,7 @@ sites:
 status-website:
   cname: status.anikenji.live
   logoUrl: https://anikenji.live/images/header-logo.png
-  favicon: https://anikenji.live/favicon.ico
+  favicon: https://anikenji.live/images/favicon.png
   name: AniKenji Status
   introTitle: "🎬 Trạng thái hệ thống **AniKenji**"
   introMessage: Theo dõi trạng thái realtime của các dịch vụ streaming AniKenji. Cập nhật tự động mỗi 3 phút.
@@ -283,7 +279,7 @@ i18n:
 # ============================================
 notifications:
   - type: discord
-    channel: ${{ secrets.DISCORD_WEBHOOK }}
+    channel: https://discord.com/api/webhooks/1458237801903427817/px9tJy2jji7cOjQH3bttV6ytIbICYV9lYD4dyIj6BCdW5lG9K4OgmPtMq3erXt4oB0SM
     # Tạo webhook trong Discord Server Settings -> Integrations -> Webhooks
     # Sau đó vào GitHub repo Settings -> Secrets and variables -> Actions
     # Tạo secret tên DISCORD_WEBHOOK với value là URL webhook
