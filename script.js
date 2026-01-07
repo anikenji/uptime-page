@@ -1,7 +1,8 @@
 // ===== Configuration =====
 const CONFIG = {
-    // API endpoints - relative paths (same domain on gh-pages)
-    apiBase: './api',
+    // API endpoints - Using relative paths (deployed from master branch)
+    apiBase: './history',
+    apiResponseTime: './api',
     // Number of days to show in uptime bar
     uptimeDays: 90,
     // Refresh interval (ms) - refresh every 5 minutes
@@ -26,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ===== Load Status Data from Upptime API =====
 async function loadStatusData() {
     try {
-        // Fetch summary.json from Upptime API
+        // Fetch summary.json from Upptime (stored in master branch)
         const response = await fetch(`${CONFIG.apiBase}/summary.json?t=${Date.now()}`);
 
         if (!response.ok) {
@@ -198,8 +199,8 @@ async function fetchAndCreateChart(canvasId, slug, currentTime) {
     let chartData = [];
 
     try {
-        // Try to fetch response time data from Upptime
-        const response = await fetch(`${CONFIG.apiBase}/${slug}/response-time.json?t=${Date.now()}`);
+        // Try to fetch response time data from Upptime (stored in api folder)
+        const response = await fetch(`${CONFIG.apiResponseTime}/${slug}/response-time.json?t=${Date.now()}`);
         if (response.ok) {
             const data = await response.json();
             // Take last 24 data points
