@@ -1,0 +1,38 @@
+name: Save Response Time to D1
+
+on:
+  workflow_run:
+    workflows: ["Uptime CI"]
+    types:
+      - completed
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  save-response-time:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Read summary and save to Worker
+        run: |
+          # Read summary.json
+          SUMMARY=$(cat history/summary.json)
+          
+          # Parse and send each service
+          echo "$SUMMARY" | jq -c '.[]' | while read service; do
+            NAME=$(echo $service | jq -r '.slug')
+            RESPONSE_TIME=$(echo $service | jq -r '.time')
+            STATUS=$(echo $service | jq -r '.status')
+            
+            echo "Saving $NAME: ${RESPONSE_TIME}ms ($STATUS)"
+            
+            curl -X POST "https://anikenji-stats.buicaobinh2016.workers.dev/save" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer anikenji-status-2024" \
+              -d "{\"service\": \"$NAME\", \"responseTime\": $RESPONSE_TIME, \"status\": \"$STATUS\"}"
+            
+            echo ""
+          done
