@@ -348,6 +348,17 @@ a:hover {
     background: rgba(255, 68, 102, 0.1);
 }
 
+/* Pulse dots in service cards */
+.pulse-dot.pulse-up {
+    background: var(--color-success) !important;
+    box-shadow: 0 0 10px var(--color-success-glow);
+}
+
+.pulse-dot.pulse-down {
+    background: var(--color-danger) !important;
+    box-shadow: 0 0 10px var(--color-danger-glow);
+}
+
 .service-stats {
     display: grid;
     grid-template-columns: 1fr 1fr;
